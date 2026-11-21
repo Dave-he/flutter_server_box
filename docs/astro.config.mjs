@@ -86,6 +86,7 @@ export default defineConfig({
 						{ label: 'Monitor Apps', translations: { 'zh-CN': 'Monitor 应用' }, slug: 'development/monitor-apps' },
 						{ label: 'Desk Apps', translations: { 'zh-CN': '桌面应用' }, slug: 'development/desk-apps' },
 						{ label: 'Desk App Reference', translations: { 'zh-CN': '桌面应用参考' }, slug: 'development/desk-app-reference' },
+						{ label: 'CLI', translations: { 'zh-CN': '命令行' }, slug: 'development/cli' },
 					],
 				},
 				// Its own entry rather than a line in a group: the app links

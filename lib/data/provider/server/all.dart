@@ -323,9 +323,16 @@ class ServersNotifier extends _$ServersNotifier {
     TermSessionManager.remove(TermSessionManager.statusSessionId(id));
   }
 
-  Future<void> addServer(Spi spi) => _mutate(() => _addServer(spi));
+  Future<void> addServer(Spi spi) => _mutate(() => _addServer(spi, connect: true));
 
-  Future<void> _addServer(Spi spi) async {
+  /// Saves through the normal mutation queue without starting an interactive dial.
+  Future<void> saveServerFromCli(Spi spi, {Spi? previous}) => _mutate(() {
+    if (previous != null) return _updateServer(previous, spi, reconnect: false);
+    if (state.servers.containsKey(spi.id)) throw const ServerChangedConcurrently();
+    return _addServer(spi, connect: false);
+  });
+
+  Future<void> _addServer(Spi spi, {required bool connect}) async {
     spi.validateOrThrow();
 
     final exists = state.servers.containsKey(spi.id);
@@ -362,7 +369,7 @@ class ServersNotifier extends _$ServersNotifier {
         ref.invalidate(serverProvider(spi.id));
       }
     }
-    unawaited(refresh(spi: spi));
+    if (connect) unawaited(refresh(spi: spi));
     bakSync.syncSoon();
   }
 
@@ -470,9 +477,9 @@ class ServersNotifier extends _$ServersNotifier {
   }
 
   Future<void> updateServer(Spi old, Spi newSpi) =>
-      _mutate(() => _updateServer(old, newSpi));
+      _mutate(() => _updateServer(old, newSpi, reconnect: true));
 
-  Future<void> _updateServer(Spi old, Spi newSpi) async {
+  Future<void> _updateServer(Spi old, Spi newSpi, {required bool reconnect}) async {
     newSpi.validateOrThrow();
 
     if (state.servers[old.id] != old) {
@@ -560,7 +567,7 @@ class ServersNotifier extends _$ServersNotifier {
       if (newSpi.shouldReconnect(old)) {
         // Use [newSpi.id] instead of [old.id] because [old.id] may be changed
         TryLimiter.reset(newSpi.id);
-        unawaited(refresh(spi: newSpi));
+        if (reconnect) unawaited(refresh(spi: newSpi));
       }
     }
     bakSync.syncSoon();

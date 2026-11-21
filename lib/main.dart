@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show File, Platform;
 
 import 'package:computer/computer.dart';
 import 'package:dartssh2/dartssh2.dart';
@@ -18,6 +19,7 @@ import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/lkc.dart';
 import 'package:server_box/core/motion.dart';
+import 'package:server_box/core/service/bridge/bridge.dart';
 import 'package:server_box/core/service/crash_report.dart';
 import 'package:server_box/core/service/diagnostics_upload.dart';
 import 'package:server_box/core/service/native_exit.dart';
@@ -265,6 +267,14 @@ Future<void> _initApp(ProviderContainer container) async {
 
   // Initialize platform session notifications and Live Activities.
   await TermSessionManager.init();
+
+  if ((isMacOS || isLinux) && Platform.environment['SBM_BRIDGE'] == 'on') {
+    try {
+      await Bridge.start(container, File('${Paths.doc}/bridge.json'));
+    } catch (e, s) {
+      Loggers.app.warning('Local CLI bridge failed to start', e, s);
+    }
+  }
 }
 
 /// `Stores.init`, and what to do when the database there does not open.
